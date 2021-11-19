@@ -150,7 +150,7 @@ class BaseSnake(Drawable):
 
         head = self.get_circle(pos=self.start_pos, color=self.head_color)
         self.circles = [head]
-        self.add_tail(2)
+        self.add_tail(2, initial=True)
 
     def get_circle(self, pos, **kwargs):
         """Получение круга с нужными параметрами."""
@@ -173,15 +173,18 @@ class BaseSnake(Drawable):
     def double_r_coef(self):
         return 2 * self.radius * 0.7
 
-    def add_tail(self, count=1):
+    def add_tail(self, count=1, initial=False):
         """Добавление элементов в хвост."""
         for _ in range(count):
             last_circle = self.circles[-1]
             radian_angle = math.radians(self.angle)
-            pos = (
-                last_circle.x - self.double_r_coef * math.cos(radian_angle),
-                last_circle.y - self.double_r_coef * math.sin(radian_angle)
-            )
+            if initial:
+                pos = (
+                    last_circle.x - self.double_r_coef * math.cos(radian_angle),
+                    last_circle.y - self.double_r_coef * math.sin(radian_angle)
+                )
+            else:
+                pos = last_circle.xy
             self.circles.append(self.get_circle(pos=pos))
 
         self.update_radius(self.radius * self.radius_increase_coef)
