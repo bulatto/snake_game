@@ -204,23 +204,18 @@ class BaseSnake(Drawable):
         prev_x = prev_y = None
         for i, circle in enumerate(self.circles):
             if i == 0:
-                radian_angle = math.radians(self.angle)
-                circle.x += self.speed * math.cos(radian_angle)
-                circle.y += self.speed * math.sin(radian_angle)
+                circle.x, circle.y = get_new_point_pos(
+                    *circle.xy, self.angle, self.speed)
                 prev_x, prev_y = circle.x, circle.y
                 continue
 
-            dx = prev_x - circle.x
-            dy = prev_y - circle.y
-            radian_angle = math.atan(abs(dy / dx)) if dx else 0
+            distance = get_points_distance(*circle.xy, prev_x, prev_y)
+            if distance > 0.5 * self.radius:
+                angle = get_angle_of_points(prev_x, prev_y, *circle.xy)
+                circle.x, circle.y = get_new_point_pos(
+                    prev_x, prev_y, angle, self.double_r_coef)
 
-            current_xy = circle.x, circle.y
-
-            coef = self.double_r_coef
-            circle.x = prev_x - coef * math.cos(radian_angle) * get_sign(dx)
-            circle.y = prev_y - coef * math.sin(radian_angle) * get_sign(dy)
-
-            prev_x, prev_y = current_xy
+            prev_x, prev_y = circle.xy
 
     @property
     def turning_angle(self):
