@@ -44,6 +44,12 @@ def calculate_angle_to_point(x, y, pos_x, pos_y, current_angle):
     return angle_diff
 
 
+def get_new_point_pos(x, y, angle, distance):
+    """Получение координат новой точки на определенном угле и дистанции."""
+    return (x + distance * math.cos(math.radians(angle)),
+            y + distance * math.sin(math.radians(angle)))
+
+
 def normalize_angle(angle):
     """Нормализация угла (чтобы был от 0 до 360)."""
     angle = angle % 360

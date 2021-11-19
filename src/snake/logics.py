@@ -181,6 +181,11 @@ class SnakeContainer(ObjectsContainer):
         self.main_snake_id = snake.id
         return snake
 
+    def snake_is_dead(self, snake):
+        """Смерть змеи."""
+        snake.is_alive = False
+        self.delete_by_id(snake.id)
+
 
 class GameLogic:
     """Класс с игровой логикой."""
@@ -210,10 +215,9 @@ class GameLogic:
             print('Игра закончена')
             sys.exit()
         else:
-            snake.is_alive = False
+            self.snake_container.snake_is_dead(snake)
             for circle in snake.circles:
                 self.food_container.add_new_obj(pos=circle.xy)
-            self.snake_container.delete_by_id(snake.id)
             self.snake_container.create_bot_snake()
 
     def check_collisions(self):
