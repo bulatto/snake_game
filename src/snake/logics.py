@@ -6,7 +6,7 @@ import pygame
 
 from settings import *
 from helpers import *
-from base_classes import Circle, ObjectsContainer, BaseSnake
+from base_classes import Circle, ObjectsContainer, BaseSnake, BaseController
 
 
 class Food(Circle):
@@ -241,37 +241,35 @@ class GameLogic:
             snake.draw()
 
 
-class Controller:
+class Controller(BaseController):
     """Контроллер."""
 
     background_color = (248, 241, 255)
 
     def __init__(self, win):
-        self.win = win
-        self.is_running = True
-
+        super().__init__(win)
         self.game = GameLogic(self.win)
         self.snake = self.game.snake
 
-    def check_events(self):
-        """Проверка игровых событий."""
-        # Ввод процесса (события)
-        for event in pygame.event.get():
-            # Проверка закрытия окна
-            if event.type == pygame.QUIT:
-                self.is_running = False
-            # Проверка зажатия клавиши
-            elif event.type == pygame.KEYDOWN:
-                if event.key in LEFT_RIGHT_BUTTONS:
-                    self.snake.set_turning(DE.get_from_button(event.key))
-            # Проверка отжатия клавиши
-            elif event.type == pygame.KEYUP:
-                if event.key in LEFT_RIGHT_BUTTONS:
-                    self.snake.set_turning(None)
+    def handle_event(self, event):
+        # Проверка зажатия клавиши
+        if event.type == pygame.KEYDOWN:
+            if event.key in LEFT_RIGHT_BUTTONS:
+                self.snake.set_turning(DE.get_from_button(event.key))
+        # Проверка отжатия клавиши
+        elif event.type == pygame.KEYUP:
+            if event.key in LEFT_RIGHT_BUTTONS:
+                self.snake.set_turning(None)
 
     def update(self):
-        self.check_events()
-        self.win.fill(self.background_color)
-
+        super().update()
         self.game.check_collisions()
         self.game.draw()
+
+
+class TestController(BaseController):
+    """Тестовый контроллер для проверки отдельных элементов."""
+    center_xy = (WIDTH // 2, HEIGHT // 2)
+
+    def update(self):
+        super().update()

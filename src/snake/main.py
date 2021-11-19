@@ -1,7 +1,7 @@
 import pygame
 
 from settings import *
-from logics import Controller
+from logics import Controller, TestController
 
 
 # Создаем игру и окно

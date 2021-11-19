@@ -276,3 +276,32 @@ class BaseSnake(Drawable):
         self.move()
         if food_count:
             self.add_tail(food_count)
+
+
+class BaseController:
+    """Базовый класс контроллера."""
+
+    background_color = WHITE
+
+    def __init__(self, win):
+        self.win = win
+        self.is_running = True
+
+    def update(self):
+        """Обновление данных."""
+        self.check_events()
+        self.win.fill(self.background_color)
+
+    def handle_event(self, event):
+        """Обработка событий."""
+        pass
+
+    def check_events(self):
+        """Проверка событий."""
+        # Ввод процесса (события)
+        for event in pygame.event.get():
+            # Проверка закрытия окна
+            if event.type == pygame.QUIT:
+                self.is_running = False
+            else:
+                self.handle_event(event)
