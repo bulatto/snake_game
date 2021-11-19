@@ -138,6 +138,7 @@ class BaseSnake(Drawable):
     head_color = WHITE
     color = WHITE
     radius_increase_coef = 1.007
+    max_radius = 25
 
     def __init__(self, snake_id, win, **kwargs):
         self.id = snake_id
@@ -191,7 +192,7 @@ class BaseSnake(Drawable):
 
     def update_radius(self, new_radius):
         """Обновить радиус."""
-        self.radius = new_radius
+        self.radius = min(new_radius, self.max_radius)
         for circle in self.circles:
             circle.radius = self.radius
 
