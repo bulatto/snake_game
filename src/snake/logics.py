@@ -1,6 +1,7 @@
 import datetime
 import random
 import sys
+from functools import partial
 
 import pygame
 
@@ -11,7 +12,7 @@ from base_classes import Circle, ObjectsContainer, BaseSnake, BaseController
 
 class Food(Circle):
     """Класс еды."""
-    color = (222, 205, 245)
+    color = PURPLE
     radius = 5
 
     def __init__(self, food_id, win, **kwargs):
@@ -26,6 +27,8 @@ class Food(Circle):
 class FoodContainer(ObjectsContainer):
     """Контейнер для еды."""
     obj_class = Food
+    # Коэффицент для соотношения угла поворота и дистанции для поиска еды
+    ANGLE_TO_DISTANCE_COEF = 1
 
     def get_eaten_food(self, snake_head):
         """Список съеденной еды."""
@@ -48,22 +51,19 @@ class FoodContainer(ObjectsContainer):
         snake_food_count = self.update_eaten_food(eaten_food)
         return snake_food_count
 
-    def get_nearest_food(self, rect, point, by_coordinates=False):
-        """Поиск ближайшей еды."""
-        # TODO: реализовать функцию по другому
-        if by_coordinates:
-            return min(
-                self.objects.values(),
-                key=lambda f: get_points_distance(*point, *f.xy)
-            )
+    def _get_food_priority_coef(self, point, current_angle, food):
+        """Вычисление коэффицента для определения удобной еды. Меньше-лучше."""
+        angle_to_rotate = calculate_angle_to_point(
+            *point, *food.xy, current_angle)
+        distance = get_points_distance(*point, *food.xy)
+        return abs(angle_to_rotate) * self.ANGLE_TO_DISTANCE_COEF + distance
 
-        food_in_rect = [
-            f for f in self.objects.values() if rect.collidepoint(f.xy)]
-        if food_in_rect:
-            return min(
-                food_in_rect,
-                key=lambda f: get_points_distance(*point, *f.xy)
-            )
+    def get_nearest_food(self, point, current_angle):
+        """Поиск ближайшей еды по параметрами."""
+        if not self.objects:
+            return None
+        key_func = partial(self._get_food_priority_coef, point, current_angle)
+        return min(self.objects.values(), key=key_func)
 
     def get_next_food(self):
         """Возвращение первой попавшейся еды."""
@@ -84,6 +84,10 @@ class BotSnake(BaseSnake):
     color = (64, 255, 108)
     head_color = (60, 255, 113)
     default_start_pos = (100, 100)
+    # Определение времени до смены еды, если еда не была сьедена за это время
+    food_delta_seconds = 1
+    # Рисовать линию до еды
+    draw_food_path = True
 
     def __init__(self, snake_id, win, food_container, **kwargs):
         kwargs.setdefault('start_pos', get_random_pos())
@@ -106,30 +110,35 @@ class BotSnake(BaseSnake):
         )
         self.change_angle(turning_angle)
 
+    def is_food_expired(self):
+        """Проверяет, испортилась ли еда"""
+        return (
+            not self.food_datetime or
+            not datetime.datetime.now() - self.food_datetime <=
+                datetime.timedelta(seconds=self.food_delta_seconds)
+        )
+
     def has_to_find_food(self, food_count):
         """Проверяет необходимости выбора другой еды."""
         return (
             food_count or
             not self.current_food or
             not self.food_container.has_object(self.current_food.id) or
-            not self.food_datetime or
-            not datetime.datetime.now() - self.food_datetime <=
-                datetime.timedelta(seconds=1)
+            self.is_food_expired()
         )
+
+    def find_new_food(self):
+        """Нахождение новой еды."""
+        self.current_food = self.food_container.get_nearest_food(
+            self.head_xy, self.angle)
+        self.food_datetime = datetime.datetime.now()
+        if self.current_food and self.draw_food_path:
+            pygame.draw.line(
+                self.win, PURPLE, self.head_xy, self.current_food.xy, 1)
 
     def update(self, food_count):
         if self.has_to_find_food(food_count):
-            for delta_angle in (0, 90, 180, 270):
-                near_food = self.food_container.get_nearest_food(
-                    self.get_rectangle(delta_angle), self.head_xy)
-                if near_food:
-                    self.current_food = near_food
-                    self.food_datetime = datetime.datetime.now()
-                    break
-
-        if self.current_food:
-            pygame.draw.line(self.win, GREEN, self.head_xy, self.current_food.xy, 1)
-
+            self.find_new_food()
         if not all(GameRect.collidepoint(*c.xy) for c in self.circles):
             self.go_to_point(WIDTH / 2,  HEIGHT / 2)
         else:

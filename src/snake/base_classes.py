@@ -244,19 +244,6 @@ class BaseSnake(Drawable):
         for circle in self.circles:
             circle.draw()
 
-    def get_rectangle(self, delta_angle=0):
-        # TODO: Доделать или избавиться от этого кода
-        x, y = self.head_xy
-        angle = normalize_angle(self.angle + delta_angle)
-        if 0 <= angle < 90:
-            return pygame.Rect(x, y, WIDTH - x, HEIGHT - y)
-        elif 90 <= angle < 180:
-            return pygame.Rect(0, y, x, HEIGHT - y)
-        elif 180 <= angle < 270:
-            return pygame.Rect(0, 0, x, y)
-        else:
-            return pygame.Rect(x, 0, WIDTH - x, y)
-
     def find_collision_with_other_snake(self, snake, exclude_self=False):
         """Нахождение столкновения головы этой змеи с другой."""
         if exclude_self and snake is self:
