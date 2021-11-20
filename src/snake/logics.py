@@ -86,8 +86,9 @@ class BotSnake(BaseSnake):
     default_start_pos = (100, 100)
     # Определение времени до смены еды, если еда не была сьедена за это время
     food_delta_seconds = 1
-    # Рисовать линию до еды
+    # Рисовать линию до еды и линию для избегания других змей
     draw_food_path = True
+    draw_collision_avoiding_lines = True
 
     def __init__(self, snake_id, win, food_container, **kwargs):
         kwargs.setdefault('start_pos', get_random_pos())
@@ -136,13 +137,42 @@ class BotSnake(BaseSnake):
             pygame.draw.line(
                 self.win, PURPLE, self.head_xy, self.current_food.xy, 1)
 
-    def update(self, food_count):
-        if self.has_to_find_food(food_count):
-            self.find_new_food()
-        if not all(GameRect.collidepoint(*c.xy) for c in self.circles):
-            self.go_to_point(WIDTH / 2,  HEIGHT / 2)
+    def avoid_collision(self, is_collide_snakes_rectangles):
+        """Избегание выхода за карту и избегание других змей."""
+        normal_angles = set()
+        for delta in (0, -45, -90, 45, 90):
+            new_pos = self.get_new_position_from_head(self.angle + delta, 50)
+            is_normal = (
+                not is_collide_snakes_rectangles(new_pos, exclude_snake=self)
+                and GameRect.collidepoint(*new_pos)
+            )
+            if is_normal:
+                normal_angles.add(delta)
+            if self.draw_collision_avoiding_lines:
+                color = GREEN if is_normal else RED
+                self.draw_line_from_head(new_pos, color)
+
+        # Обработка ситуаций, когда сбоку препятствие
+        for angle_set, new_angle in (({-45, -90}, 45), ({45, 90}, -45)):
+            if not angle_set.issubset(normal_angles):
+                self.change_angle(new_angle)
+                return True
+
+        # Проверка возможности пройти вперед, если нет - поворачиваем
+        if 0 in normal_angles:
+            return False
         else:
-            self.go_to_point(*self.current_food.xy)
+            self.change_angle(normal_angles.pop() if normal_angles else 180)
+            return True
+
+    def update(self, food_count, is_collide_snakes_rectangles, **kwargs):
+        collision_is_avoided = self.avoid_collision(
+            is_collide_snakes_rectangles)
+        if not collision_is_avoided:
+            pass
+            # if self.has_to_find_food(food_count):
+            #     self.find_new_food()
+            # self.go_to_point(*self.current_food.xy)
         self.move()
         if food_count:
             self.add_tail(food_count)
@@ -208,10 +238,12 @@ class SnakeContainer(ObjectsContainer):
         return [(snake, snake.get_collision_rectangles())
                 for snake in self.get_snake_generator()]
 
-    def is_collide_snakes_rectangles(self, pos):
+    def is_collide_snakes_rectangles(self, pos, exclude_snake=None):
+        """Проверка, что точка лежит в каком-нибудь прямоугольнике змеи."""
         return any(
             rect.collidepoint(*pos)
-            for _, rectangles in self.snakes_rectangles for rect in rectangles
+            for s, rectangles in self.snakes_rectangles for rect in rectangles
+            if not exclude_snake or (exclude_snake and s is not exclude_snake)
         )
 
 
@@ -267,16 +299,12 @@ class GameLogic:
         snakes_was_updated = False
 
         for snake in self.get_snakes():
-            snake_food_count = self.food_container.update(snake.head)
-            snake.update(food_count=snake_food_count)
-
             for other_snake in self.get_snakes():
                 collision = snake.find_collision_with_other_snake(
                     other_snake, exclude_self=True)
                 if collision is not None:
                     self.snake_is_dead(snake)
                     snakes_was_updated = True
-
         if snakes_was_updated:
             self.check_collisions()
 
@@ -292,6 +320,15 @@ class GameLogic:
 
     def update(self, **kwargs):
         self.snake_container.clear_snakes_rectangles()
+        self.check_collisions()
+        for snake in self.get_snakes():
+            snake_food_count = self.food_container.update(snake.head)
+            snake.update(
+                food_count=snake_food_count,
+                is_collide_snakes_rectangles=(
+                    self.snake_container.is_collide_snakes_rectangles),
+            )
+        self.draw()
 
 
 class Controller(BaseController):
@@ -316,8 +353,6 @@ class Controller(BaseController):
     def update(self):
         super().update()
         self.game.update()
-        self.game.check_collisions()
-        self.game.draw()
 
 
 class TestController(BaseController):

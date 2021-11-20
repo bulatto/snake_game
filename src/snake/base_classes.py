@@ -149,6 +149,8 @@ class BaseSnake(Drawable):
     color = WHITE
     radius_increase_coef = 1.007
     max_radius = 25
+    # Рисовать ли треугольники для расчёта коллизий
+    draw_collision_rectangles = True
 
     def __init__(self, snake_id, win, **kwargs):
         self.id = snake_id
@@ -237,8 +239,12 @@ class BaseSnake(Drawable):
 
     def change_angle(self, delta_angle=None):
         """Изменение угла."""
-        delta_angle = self.turning_angle if delta_angle is None else delta_angle
-        self.angle = normalize_angle(self.angle + delta_angle)
+        if delta_angle is None:
+            delta = self.turning_angle
+        else:
+            max_angle = get_sign(delta_angle) * self.max_turning_angle
+            delta = min(delta_angle, max_angle, key=abs)
+        self.angle = normalize_angle(self.angle + delta)
 
     def set_turning(self, direction=None):
         """Установка/отключение поворота в сторону."""
@@ -250,7 +256,7 @@ class BaseSnake(Drawable):
             self.turning_direction = direction
 
     def draw(self, **kwargs):
-        for circle in self.circles:
+        for circle in reversed(self.circles):
             circle.draw()
 
     def find_collision_with_other_snake(self, snake, exclude_self=False):
@@ -265,18 +271,29 @@ class BaseSnake(Drawable):
                 if not (snake is self and i <= 1):
                     return i
 
-    def get_collision_rectangles(self, step=10):
+    def get_collision_rectangles(self, step=5):
         """Получение прямоугольников для определения коллизий."""
         rects = [circle.rect for circle in self.circles]
         rectangles = [
             functools.reduce(pygame.Rect.union, rects[i * step: (i + 1) * step])
             for i in range(math.ceil(len(rects) / step))
         ]
+        if self.draw_collision_rectangles:
+            for r in rectangles:
+                self.draw_rect(r, RED)
         return rectangles
+
+    def get_new_position_from_head(self, angle, distance):
+        """Получение новой позиции, начиная от головы."""
+        return get_new_point_pos(*self.head_xy, angle, distance)
 
     def draw_rect(self, rectangle, color):
         """Нарисовать прямоугольник на экране."""
         pygame.draw.rect(self.win, color, rectangle, 1)
+
+    def draw_line_from_head(self, pos, color=None):
+        """Нарисовать линию из точки головы"""
+        pygame.draw.line(self.win, color or self.color, self.head_xy, pos)
 
     def update(self, **kwargs):
         """Базовое обновление змеи (движение и поедание еды."""
