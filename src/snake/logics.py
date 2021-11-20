@@ -87,8 +87,8 @@ class BotSnake(BaseSnake):
     # Определение времени до смены еды, если еда не была сьедена за это время
     food_delta_seconds = 1
     # Рисовать линию до еды и линию для избегания других змей
-    draw_food_path = True
-    draw_collision_avoiding_lines = True
+    draw_food_path = DRAW_FOOD_PATH
+    draw_collision_avoiding_lines = DRAW_COLLISION_AVOIDING_LINES
 
     def __init__(self, snake_id, win, food_container, **kwargs):
         kwargs.setdefault('start_pos', get_random_pos())
@@ -133,9 +133,11 @@ class BotSnake(BaseSnake):
         self.current_food = self.food_container.get_nearest_food(
             self.head_xy, self.angle)
         self.food_datetime = datetime.datetime.now()
+
+    def draw_food_line(self):
+        """Рисование линии до еды"""
         if self.current_food and self.draw_food_path:
-            pygame.draw.line(
-                self.win, PURPLE, self.head_xy, self.current_food.xy, 1)
+            self.draw_line_from_head(self.current_food.xy, PURPLE)
 
     def avoid_collision(self, is_collide_snakes_rectangles):
         """Избегание выхода за карту и избегание других змей."""
@@ -169,10 +171,10 @@ class BotSnake(BaseSnake):
         collision_is_avoided = self.avoid_collision(
             is_collide_snakes_rectangles)
         if not collision_is_avoided:
-            pass
-            # if self.has_to_find_food(food_count):
-            #     self.find_new_food()
-            # self.go_to_point(*self.current_food.xy)
+            if self.has_to_find_food(food_count):
+                self.find_new_food()
+            self.go_to_point(*self.current_food.xy)
+        self.draw_food_line()
         self.move()
         if food_count:
             self.add_tail(food_count)
@@ -290,7 +292,7 @@ class GameLogic:
             if check_distance_to_head:
                 is_normal_distance = (
                     check_distance_to_head or get_points_distance(
-                        *pos, *self.snake.head_xy) > self.snake.speed * FPS * 2
+                        *pos, *self.snake.head_xy) > self.snake.speed * FPS * 3
                 )
         return pos
 

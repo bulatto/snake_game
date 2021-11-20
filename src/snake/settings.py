@@ -12,3 +12,8 @@ WIDTH = 800
 HEIGHT = 800
 # частота кадров в секунду
 FPS = 30
+
+# Настройки игры
+DRAW_FOOD_PATH = True
+DRAW_COLLISION_AVOIDING_LINES = False
+DRAW_COLLISION_RECTANGLES = False

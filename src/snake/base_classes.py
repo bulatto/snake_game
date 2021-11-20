@@ -150,7 +150,7 @@ class BaseSnake(Drawable):
     radius_increase_coef = 1.007
     max_radius = 25
     # Рисовать ли треугольники для расчёта коллизий
-    draw_collision_rectangles = True
+    draw_collision_rectangles = DRAW_COLLISION_RECTANGLES
 
     def __init__(self, snake_id, win, **kwargs):
         self.id = snake_id
