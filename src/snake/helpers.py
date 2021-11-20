@@ -58,7 +58,7 @@ def normalize_angle(angle):
     return angle
 
 
-def get_random_pos(coef=0.15):
+def get_random_pos(coef=0.1):
     """Получение случайных координат.
 
     Коэффицент нужен для отдаления от краев экрана.

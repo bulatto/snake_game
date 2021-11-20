@@ -1,4 +1,5 @@
 import abc
+import functools
 import random
 
 from settings import *
@@ -74,6 +75,15 @@ class Circle(AbstractFigure):
     def get_distance_to_circle(self, circle):
         """Растояние от центра круга до центра другого круга."""
         return get_points_distance(*self.xy, *circle.xy)
+
+    @property
+    def rect(self):
+        """Получение прямоугольника."""
+        coords = self.coords
+        return pygame.Rect(
+            (coords.left, coords.top,
+             coords.right - coords.left, coords.bottom - coords.top)
+        )
 
 
 class ObjectsContainer(Drawable):
@@ -254,6 +264,19 @@ class BaseSnake(Drawable):
                 # Пропускаем коллизии, если это сама же змея и её голова
                 if not (snake is self and i <= 1):
                     return i
+
+    def get_collision_rectangles(self, step=10):
+        """Получение прямоугольников для определения коллизий."""
+        rects = [circle.rect for circle in self.circles]
+        rectangles = [
+            functools.reduce(pygame.Rect.union, rects[i * step: (i + 1) * step])
+            for i in range(math.ceil(len(rects) / step))
+        ]
+        return rectangles
+
+    def draw_rect(self, rectangle, color):
+        """Нарисовать прямоугольник на экране."""
+        pygame.draw.rect(self.win, color, rectangle, 1)
 
     def update(self, **kwargs):
         """Базовое обновление змеи (движение и поедание еды."""

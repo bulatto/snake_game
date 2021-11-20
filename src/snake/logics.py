@@ -156,6 +156,7 @@ class SnakeContainer(ObjectsContainer):
         super().__init__(win, count)
         self.food_container = food_container
         self.main_snake_id = None
+        self._snakes_rectangles = None
 
     @property
     def main_snake(self):
@@ -195,6 +196,24 @@ class SnakeContainer(ObjectsContainer):
         snake.is_alive = False
         self.delete_by_id(snake.id)
 
+    def clear_snakes_rectangles(self):
+        """Застаявляем при следующем обращении пересчитывать прямоугольники."""
+        self._snakes_rectangles = None
+
+    @property
+    def snakes_rectangles(self):
+        """Получение прямоугольников для змей."""
+        if self._snakes_rectangles is not None:
+            return self._snakes_rectangles
+        return [(snake, snake.get_collision_rectangles())
+                for snake in self.get_snake_generator()]
+
+    def is_collide_snakes_rectangles(self, pos):
+        return any(
+            rect.collidepoint(*pos)
+            for _, rectangles in self.snakes_rectangles for rect in rectangles
+        )
+
 
 class GameLogic:
     """Класс с игровой логикой."""
@@ -212,11 +231,10 @@ class GameLogic:
 
     def get_snakes(self, only_bots=False, only_alive=True):
         """Получение списка змей."""
-        snakes = (self.snake_container.bot_snakes if only_bots
-                   else self.snake_container.all_snakes)
-        if only_alive:
-            snakes = [snake for snake in snakes if snake.is_alive]
-        return snakes
+        return [
+            s for s in self.snake_container.get_snake_generator(only_bots)
+            if not only_alive or (only_alive and s.is_alive)
+        ]
 
     def snake_is_dead(self, snake):
         """Отработка гибели змеи."""
@@ -227,7 +245,22 @@ class GameLogic:
             self.snake_container.snake_is_dead(snake)
             for circle in snake.circles:
                 self.food_container.add_new_obj(pos=circle.xy)
-            self.snake_container.create_bot_snake()
+            self.snake_container.create_bot_snake(
+                start_pos=self.get_random_free_position())
+
+    def get_random_free_position(self, check_distance_to_head=True):
+        """Получение точки далеко от других змей и игрока"""
+        pos = get_random_pos(0.15)
+        is_in_rect = is_normal_distance = False
+        while is_in_rect or not is_normal_distance:
+            pos = get_random_pos(0.15)
+            is_in_rect = self.snake_container.is_collide_snakes_rectangles(pos)
+            if check_distance_to_head:
+                is_normal_distance = (
+                    check_distance_to_head or get_points_distance(
+                        *pos, *self.snake.head_xy) > self.snake.speed * FPS * 2
+                )
+        return pos
 
     def check_collisions(self):
         """Проверка коллизий."""
@@ -247,11 +280,18 @@ class GameLogic:
         if snakes_was_updated:
             self.check_collisions()
 
+    def set_snake_turning(self, direction):
+        """Установка направления поворота змеи."""
+        self.snake.set_turning(direction)
+
     def draw(self):
         """Отрисовка всего."""
         self.food_container.draw()
         for snake in self.get_snakes():
             snake.draw()
+
+    def update(self, **kwargs):
+        self.snake_container.clear_snakes_rectangles()
 
 
 class Controller(BaseController):
@@ -262,20 +302,20 @@ class Controller(BaseController):
     def __init__(self, win):
         super().__init__(win)
         self.game = GameLogic(self.win)
-        self.snake = self.game.snake
 
     def handle_event(self, event):
         # Проверка зажатия клавиши
         if event.type == pygame.KEYDOWN:
             if event.key in LEFT_RIGHT_BUTTONS:
-                self.snake.set_turning(DE.get_from_button(event.key))
+                self.game.set_snake_turning(DE.get_from_button(event.key))
         # Проверка отжатия клавиши
         elif event.type == pygame.KEYUP:
             if event.key in LEFT_RIGHT_BUTTONS:
-                self.snake.set_turning(None)
+                self.game.set_snake_turning(None)
 
     def update(self):
         super().update()
+        self.game.update()
         self.game.check_collisions()
         self.game.draw()
 
