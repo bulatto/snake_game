@@ -96,26 +96,26 @@ class ObjectsContainer(Drawable):
         self.win = win
         self.objects = {}
         if count:
-            self.add(count)
+            self.add_multiple_objs(count, force=True)
 
     def get_new_obj(self, **kwargs):
         """Получение нового объекта"""
         return self.obj_class(self.get_id(), self.win, **kwargs)
 
-    def add(self, count):
-        """Добавление нескольких элементв"""
-        objects = (self.get_new_obj() for _ in range(count))
-        self.objects.update(((obj.id, obj) for obj in objects))
-
     def add_obj(self, obj):
         """Добавление объекта"""
         self.objects[obj.id] = obj
+        return True
 
     def add_new_obj(self, **kwargs):
         """Добавление нового объекта"""
         obj = self.get_new_obj(**kwargs)
         self.add_obj(obj)
         return obj
+
+    def add_multiple_objs(self, count, **kwargs):
+        """Добавление нескольких элементв"""
+        return [self.add_new_obj(**kwargs) for _ in range(count)]
 
     @classmethod
     def get_id(cls):

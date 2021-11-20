@@ -29,6 +29,17 @@ class FoodContainer(ObjectsContainer):
     obj_class = Food
     # Коэффицент для соотношения угла поворота и дистанции для поиска еды
     ANGLE_TO_DISTANCE_COEF = 1
+    max_food_count = MAX_FOOD_COUNT
+
+    def add_obj(self, obj, force=False):
+        if force or len(self.objects) < self.max_food_count:
+            return super().add_obj(obj)
+        return False
+
+    def add_new_obj(self, force=False, **kwargs):
+        obj = self.get_new_obj(**kwargs)
+        result = self.add_obj(obj, force)
+        return obj if result else None
 
     def get_eaten_food(self, snake_head):
         """Список съеденной еды."""
@@ -43,7 +54,7 @@ class FoodContainer(ObjectsContainer):
         count = len(eaten_food)
         for food in eaten_food:
             self.delete_by_id(food.id)
-            self.add(1)
+            self.add_new_obj()
         return count
 
     def update(self, snake_head):
@@ -173,7 +184,8 @@ class BotSnake(BaseSnake):
         if not collision_is_avoided:
             if self.has_to_find_food(food_count):
                 self.find_new_food()
-            self.go_to_point(*self.current_food.xy)
+            if self.current_food:
+                self.go_to_point(*self.current_food.xy)
         self.draw_food_line()
         self.move()
         if food_count:
@@ -256,7 +268,7 @@ class GameLogic:
         self.win = win
 
         self.bot_snakes = []
-        self.food_container = FoodContainer(self.win, count=100)
+        self.food_container = FoodContainer(self.win, count=INITIAL_FOOD_COUNT)
         self.snake_container = SnakeContainer(self.food_container, self.win)
         self.snake = self.snake_container.create_main_snake()
 
@@ -278,7 +290,7 @@ class GameLogic:
         else:
             self.snake_container.snake_is_dead(snake)
             for circle in snake.circles:
-                self.food_container.add_new_obj(pos=circle.xy)
+                self.food_container.add_new_obj(pos=circle.xy, force=True)
             self.snake_container.create_bot_snake(
                 start_pos=self.get_random_free_position())
 
@@ -291,7 +303,8 @@ class GameLogic:
             is_in_rect = self.snake_container.is_collide_snakes_rectangles(pos)
             if check_distance_to_head:
                 is_normal_distance = (
-                    check_distance_to_head or get_points_distance(
+                    not check_distance_to_head or
+                    check_distance_to_head and get_points_distance(
                         *pos, *self.snake.head_xy) > self.snake.speed * FPS * 3
                 )
         return pos
