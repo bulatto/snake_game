@@ -101,9 +101,9 @@ class BotSnake(BaseSnake):
     draw_food_path = DRAW_FOOD_PATH
     draw_collision_avoiding_lines = DRAW_COLLISION_AVOIDING_LINES
 
-    def __init__(self, food_container, *args, **kwargs):
+    def __init__(self, snake_id, win, food_container, **kwargs):
         kwargs.setdefault('start_pos', get_random_pos())
-        super().__init__(*args, **kwargs)
+        super().__init__(snake_id, win, **kwargs)
         self.current_food = None
         self.food_container = food_container
         self.angle_different = 0
@@ -196,8 +196,8 @@ class SnakeContainer(ObjectsContainer):
     """Контейнер для змей."""
     obj_class = Food
 
-    def __init__(self, food_container, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, food_container, win, count=0):
+        super().__init__(win, count)
         self.food_container = food_container
         self.main_snake_id = None
         self._snakes_rectangles = None
@@ -222,20 +222,15 @@ class SnakeContainer(ObjectsContainer):
     def bot_snakes(self):
         return list(self.get_snake_generator(only_bots=True))
 
-    @property
-    def base_snake_params(self):
-        """Базовые параметры змей."""
-        return self.get_id(), self.win, self.camera
-
     def create_bot_snake(self, **kwargs):
         """Создание змеи - бота"""
-        bot = BotSnake(self.food_container, *self.base_snake_params,  **kwargs)
+        bot = BotSnake(self.get_id(), self.win, self.food_container, **kwargs)
         self.add_obj(bot)
         return bot.id
 
     def create_main_snake(self, **snake_params):
         """Создание змеи игрока"""
-        snake = Snake(*self.base_snake_params, **snake_params)
+        snake = Snake(self.get_id(), self.win, **snake_params)
         self.add_obj(snake)
         self.main_snake_id = snake.id
         return snake
@@ -266,49 +261,19 @@ class SnakeContainer(ObjectsContainer):
         )
 
 
-class Camera:
-    """Класс камеры, чтобы игрок всегда находился по центру."""
-
-    def __init__(self):
-        self.offset = pygame.math.Vector2(0, 0)
-        self.offset_float = pygame.math.Vector2(0, 0)
-        self.snake = self.center_offset = None
-
-    def set_player(self, snake):
-        """Установка игрока."""
-        self.snake = snake
-        self.center_offset = pygame.math.Vector2(
-            -WIDTH / 2 + snake.radius, -HEIGHT / 2 + snake.radius)
-
-    def scroll(self):
-        """Перемещение камеры."""
-        if not self.snake:
-            raise Exception('Не задан игрок для правильного перемещения камеры')
-        x, y = self.snake.head.xy
-        self.offset_float.x += (x - self.offset_float.x + self.center_offset.x)
-        self.offset_float.y += (y - self.offset_float.y + self.center_offset.y)
-        self.offset.x = int(self.offset_float.x)
-        self.offset.y = int(self.offset_float.y)
-
-
 class GameLogic:
     """Класс с игровой логикой."""
 
     def __init__(self, win):
         self.win = win
-        self.camera = Camera()
 
         self.bot_snakes = []
-        self.food_container = FoodContainer(
-            self.win, self.camera, count=INITIAL_FOOD_COUNT)
-        self.snake_container = SnakeContainer(
-            self.food_container, self.win, self.camera)
+        self.food_container = FoodContainer(self.win, count=INITIAL_FOOD_COUNT)
+        self.snake_container = SnakeContainer(self.food_container, self.win)
         self.snake = self.snake_container.create_main_snake()
 
         for one_pos in (100, 300, 500, 700):
             self.snake_container.create_bot_snake(start_pos=(one_pos, one_pos))
-
-        self.camera.set_player(self.snake)
 
     def get_snakes(self, only_bots=False, only_alive=True):
         """Получение списка змей."""
@@ -379,7 +344,6 @@ class GameLogic:
                 is_collide_snakes_rectangles=(
                     self.snake_container.is_collide_snakes_rectangles),
             )
-        self.camera.scroll()
         self.draw()
 
 

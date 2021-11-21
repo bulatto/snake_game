@@ -70,13 +70,6 @@ def get_random_pos(coef=0.1):
     )
 
 
-def get_xy_for_camera(position, camera=None):
-    """Получение позиции с учетом камеры."""
-    if not camera:
-        return position
-    return position[0] - camera.offset.x, position[1] - camera.offset.y
-
-
 class DirectionEnum:
     """Описание направлений"""
 
