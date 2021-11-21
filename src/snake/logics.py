@@ -331,10 +331,8 @@ class GameLogic:
 
     def get_random_free_position(self, check_distance_to_head=True):
         """Получение точки далеко от других змей и игрока"""
-        # TODO: определить причину долгого выполнения
-        pos = get_random_pos(0.15)
-        is_in_rect = is_normal_distance = False
-        while is_in_rect or not is_normal_distance:
+        is_normal_distance = True
+        for i in range(10):
             pos = get_random_pos(0.15)
             is_in_rect = self.snake_container.is_collide_snakes_rectangles(pos)
             if check_distance_to_head:
@@ -343,7 +341,9 @@ class GameLogic:
                     check_distance_to_head and get_points_distance(
                         *pos, *self.snake.head_xy) > self.snake.speed * FPS * 3
                 )
-        return pos
+            if not is_in_rect and is_normal_distance:
+                return pos
+        return random.choice((0, WIDTH)), random.randint(0, HEIGHT)
 
     def check_collisions(self):
         """Проверка коллизий."""
