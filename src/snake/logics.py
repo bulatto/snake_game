@@ -377,12 +377,23 @@ class Controller(BaseController):
             if event.key in LEFT_RIGHT_BUTTONS:
                 self.game.set_snake_turning(None)
 
+    def draw_mini_map(self, size):
+        """Отрисовка мини карты."""
+        mini_map = pygame.transform.scale(self.game_surface, (size, size))
+        self.win.blit(mini_map, (0, WINDOW_HEIGHT - size))
+        pygame.draw.rect(
+            self.win, BLACK,
+            pygame.Rect(0, WINDOW_HEIGHT - size, size, size), 1
+        )
+
     def update(self):
         super().update()
         self.game.update()
 
         self.win.fill(self.default_color)
         self.win.blit(self.game_surface, self.game.game_surface_offset)
+        if SHOW_MINI_MAP:
+            self.draw_mini_map(MINI_MAP_SIZE)
 
 
 class TestController(BaseController):

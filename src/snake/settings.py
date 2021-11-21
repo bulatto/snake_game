@@ -14,6 +14,8 @@ GAME_DEFAULT_COLOR = BLACK
 GAME_BACKGROUND_COLOR = (248, 241, 255)
 # Ширина и высота игрового поля
 WIDTH = HEIGHT = 1500
+SHOW_MINI_MAP = True
+MINI_MAP_SIZE = 200
 # Частота кадров в секунду
 FPS = 30
 # Отображение вспомогательных объектов
