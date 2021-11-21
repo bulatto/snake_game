@@ -45,7 +45,9 @@ class FoodContainer(ObjectsContainer):
         """Список съеденной еды."""
         return [
             food for food in self.objects.values()
-            if food.get_distance_to_circle(snake_head) < (
+            if abs(food.x - snake_head.x) <= snake_head.radius + food.radius and
+               abs(food.y - snake_head.y) <= snake_head.radius + food.radius and
+               food.get_distance_to_circle(snake_head) < (
                snake_head.radius + food.radius)
         ]
 
