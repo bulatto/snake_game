@@ -46,7 +46,11 @@ class Circle(AbstractFigure):
 
     def draw(self, **kwargs):
         """Отрисовка круга."""
-        pygame.draw.circle(self.win, self.color, (self.x, self.y), self.radius)
+        pygame.draw.circle(
+            self.win, self.color,
+            get_xy_for_camera((self.x, self.y), kwargs.get('camera')),
+            self.radius
+        )
 
     @property
     def xy(self):
@@ -92,8 +96,9 @@ class ObjectsContainer(Drawable):
     current_id = 0
     obj_class = None
 
-    def __init__(self, win, count=0):
+    def __init__(self, win, camera, count=0):
         self.win = win
+        self.camera = camera
         self.objects = {}
         if count:
             self.add_multiple_objs(count, force=True)
@@ -125,8 +130,9 @@ class ObjectsContainer(Drawable):
 
     def draw(self, **kwargs):
         """Отрисовка объектов."""
+        kwargs['camera'] = self.camera
         for obj in self.objects.values():
-            obj.draw()
+            obj.draw(**kwargs)
 
     def delete_by_id(self, obj_id):
         """Удаление объекта по id."""
@@ -152,9 +158,12 @@ class BaseSnake(Drawable):
     # Рисовать ли треугольники для расчёта коллизий
     draw_collision_rectangles = DRAW_COLLISION_RECTANGLES
 
-    def __init__(self, snake_id, win, **kwargs):
+    def __init__(self, snake_id, win, camera, **kwargs):
         self.id = snake_id
         self.win = win
+        self.camera = camera
+        self.get_display_pos = functools.partial(
+            get_xy_for_camera, camera=self.camera)
         self.angle = kwargs.get('angle', self.angle)
         self.start_pos = kwargs.get('start_pos', self.default_start_pos)
         self.radius = 10
@@ -257,7 +266,7 @@ class BaseSnake(Drawable):
 
     def draw(self, **kwargs):
         for circle in reversed(self.circles):
-            circle.draw()
+            circle.draw(camera=self.camera, **kwargs)
 
     def find_collision_with_other_snake(self, snake, exclude_self=False):
         """Нахождение столкновения головы этой змеи с другой."""
@@ -289,11 +298,19 @@ class BaseSnake(Drawable):
 
     def draw_rect(self, rectangle, color):
         """Нарисовать прямоугольник на экране."""
-        pygame.draw.rect(self.win, color, rectangle, 1)
+        display_rect = pygame.Rect(
+            self.get_display_pos(rectangle.topleft),
+            (rectangle.width, rectangle.height)
+        )
+        pygame.draw.rect(self.win, color, display_rect, 1)
 
     def draw_line_from_head(self, pos, color=None):
         """Нарисовать линию из точки головы"""
-        pygame.draw.line(self.win, color or self.color, self.head_xy, pos)
+        pygame.draw.line(
+            self.win, color or self.color,
+            self.get_display_pos(self.head_xy),
+            self.get_display_pos(pos)
+        )
 
     def update(self, **kwargs):
         """Базовое обновление змеи (движение и поедание еды."""
