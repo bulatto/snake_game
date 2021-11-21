@@ -6,16 +6,20 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 PURPLE = (222, 205, 245)
 
-# ширина игрового окна
-WIDTH = 800
-# высота игрового окна
-HEIGHT = 800
-# частота кадров в секунду
-FPS = 30
+# Ширина и высота окна
+WINDOW_WIDTH = WINDOW_HEIGHT = 800
 
 # Настройки игры
+GAME_DEFAULT_COLOR = BLACK
+GAME_BACKGROUND_COLOR = (248, 241, 255)
+# Ширина и высота игрового поля
+WIDTH = HEIGHT = 1500
+# Частота кадров в секунду
+FPS = 30
+# Отображение вспомогательных объектов
 DRAW_FOOD_PATH = True
 DRAW_COLLISION_AVOIDING_LINES = False
 DRAW_COLLISION_RECTANGLES = False
-MAX_FOOD_COUNT = 50
-INITIAL_FOOD_COUNT = 50
+# Количество еды
+MAX_FOOD_COUNT = 200
+INITIAL_FOOD_COUNT = 500

@@ -311,12 +311,13 @@ class BaseController:
 
     def __init__(self, win):
         self.win = win
+        self.game_surface = pygame.Surface((WIDTH, HEIGHT))
         self.is_running = True
 
     def update(self):
         """Обновление данных."""
         self.check_events()
-        self.win.fill(self.background_color)
+        self.game_surface.fill(self.background_color)
 
     def handle_event(self, event):
         """Обработка событий."""

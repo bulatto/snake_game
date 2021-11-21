@@ -348,15 +348,24 @@ class GameLogic:
             )
         self.draw()
 
+    @property
+    def game_surface_offset(self):
+        """Смещение игровой площадки."""
+        return (
+            WINDOW_WIDTH // 2 - self.snake.head.x,
+            WINDOW_HEIGHT // 2 - self.snake.head.y
+        )
+
 
 class Controller(BaseController):
     """Контроллер."""
 
-    background_color = (248, 241, 255)
+    default_color = GAME_DEFAULT_COLOR
+    background_color = GAME_BACKGROUND_COLOR
 
     def __init__(self, win):
         super().__init__(win)
-        self.game = GameLogic(self.win)
+        self.game = GameLogic(self.game_surface)
 
     def handle_event(self, event):
         # Проверка зажатия клавиши
@@ -371,6 +380,9 @@ class Controller(BaseController):
     def update(self):
         super().update()
         self.game.update()
+
+        self.win.fill(self.default_color)
+        self.win.blit(self.game_surface, self.game.game_surface_offset)
 
 
 class TestController(BaseController):
