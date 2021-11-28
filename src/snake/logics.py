@@ -320,9 +320,22 @@ class GameLogic:
             for other_snake in self.get_snakes():
                 collision = snake.find_collision_with_other_snake(
                     other_snake, exclude_self=True)
-                if collision is not None:
+                if collision is None:
+                    continue
+                elif collision == 0:
+                    # Погибает та змея, у которой меньше угол до другой головы,
+                    # т.е. та змея, которая въехала
+                    snake_angle = abs(calculate_angle_to_point(
+                        *snake.head_xy, *other_snake.head_xy, snake.angle))
+                    other_snake_angle = abs(calculate_angle_to_point(
+                        *other_snake.head_xy, *snake.head_xy,
+                        other_snake.angle))
+                    self.snake_is_dead(snake if snake_angle <= other_snake_angle
+                                       else other_snake)
+                else:
                     self.snake_is_dead(snake)
-                    snakes_was_updated = True
+                snakes_was_updated = True
+
         if snakes_was_updated:
             self.check_collisions()
 
