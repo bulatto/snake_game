@@ -304,9 +304,9 @@ class GameLogic:
             is_in_rect = self.snake_container.is_collide_snakes_rectangles(pos)
             if check_distance_to_head:
                 is_normal_distance = (
-                    not check_distance_to_head or
-                    check_distance_to_head and get_points_distance(
-                        *pos, *self.snake.head_xy) > self.snake.speed * FPS * 3
+                    not check_distance_to_head or check_distance_to_head and
+                    get_points_distance(*pos, *self.snake.head_xy) > (
+                        self.snake.current_speed * FPS * 3)
                 )
             if not is_in_rect and is_normal_distance:
                 return pos
@@ -336,6 +336,10 @@ class GameLogic:
     def set_snake_turning(self, direction):
         """Установка направления поворота змеи."""
         self.snake.set_turning(direction)
+
+    def set_snake_boost(self, enable_boost):
+        """Установка ускорения змеи."""
+        self.snake.set_boost(enable_boost)
 
     def draw(self):
         """Отрисовка всего."""
@@ -380,10 +384,14 @@ class Controller(BaseController):
         if event.type == pygame.KEYDOWN:
             if event.key in LEFT_RIGHT_BUTTONS:
                 self.game.set_snake_turning(DE.get_from_button(event.key))
+            elif event.key == pygame.K_UP:
+                self.game.set_snake_boost(True)
         # Проверка отжатия клавиши
         elif event.type == pygame.KEYUP:
             if event.key in LEFT_RIGHT_BUTTONS:
                 self.game.set_snake_turning(None)
+            elif event.key == pygame.K_UP:
+                self.game.set_snake_boost(False)
 
     def draw_mini_map(self, size):
         """Отрисовка мини карты."""

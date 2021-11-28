@@ -109,7 +109,8 @@ KEY_SIGN_MAPPING = {
 
 # Кнопки управления
 LEFT_RIGHT_BUTTONS = (pygame.K_LEFT, pygame.K_RIGHT)
-DIRECTIONS_BUTTONS = (*LEFT_RIGHT_BUTTONS, pygame.K_UP, pygame.K_DOWN)
+UP_DOWN_BUTTONS = (pygame.K_UP, pygame.K_DOWN)
+DIRECTIONS_BUTTONS = (*LEFT_RIGHT_BUTTONS, *UP_DOWN_BUTTONS)
 
 # Прямоугольник с игровым полем
 GameRect = pygame.Rect(0, 0, WIDTH, HEIGHT)

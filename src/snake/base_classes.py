@@ -143,7 +143,12 @@ class BaseSnake(Drawable):
 
     angle = 0
     max_turning_angle = 10
-    speed = 5
+    # Обычная скорость
+    usual_speed = 5
+    # Величина увеличения скорости в секунду
+    acceleration = 3
+    # Максимальная скорость с ускорением
+    max_speed_with_boost = 10
     default_start_pos = (WIDTH / 2, HEIGHT / 2)
     head_color = WHITE
     color = WHITE
@@ -160,6 +165,8 @@ class BaseSnake(Drawable):
         self.radius = 10
         self.is_alive = True
         self.turning_direction = None
+        self.is_boost_enabled = False
+        self.current_speed = self.usual_speed
 
         head = self.get_circle(pos=self.start_pos, color=self.head_color)
         self.circles = [head]
@@ -208,6 +215,19 @@ class BaseSnake(Drawable):
         for circle in self.circles:
             circle.radius = self.radius
 
+    def update_current_speed(self):
+        """Обновить текущую скорость с учетом ускорения/замедления."""
+        if self.is_boost_enabled:
+            self.current_speed = self.current_speed + self.acceleration / FPS
+            if self.current_speed > self.max_speed_with_boost:
+                self.current_speed = self.max_speed_with_boost
+        elif self.current_speed == self.usual_speed:
+            return
+        else:
+            self.current_speed = self.current_speed - self.acceleration / FPS
+            if self.current_speed < self.usual_speed:
+                self.current_speed = self.usual_speed
+
     def move(self):
         """Движение вперед."""
         if not self.circles:
@@ -217,7 +237,7 @@ class BaseSnake(Drawable):
         for i, circle in enumerate(self.circles):
             if i == 0:
                 circle.x, circle.y = get_new_point_pos(
-                    *circle.xy, self.angle, self.speed)
+                    *circle.xy, self.angle, self.current_speed)
                 prev_x, prev_y = circle.x, circle.y
                 continue
 
@@ -254,6 +274,10 @@ class BaseSnake(Drawable):
             raise ValueError('Неверное направление поворота')
         else:
             self.turning_direction = direction
+
+    def set_boost(self, enable_boost=True):
+        """Установка/отключение ускорения в сторону."""
+        self.is_boost_enabled = enable_boost
 
     def draw(self, **kwargs):
         for circle in reversed(self.circles):
@@ -298,6 +322,7 @@ class BaseSnake(Drawable):
     def update(self, **kwargs):
         """Базовое обновление змеи (движение и поедание еды."""
         food_count = kwargs.get('food_count', 0)
+        self.update_current_speed()
         self.change_angle()
         self.move()
         if food_count:
