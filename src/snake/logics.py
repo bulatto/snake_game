@@ -326,6 +326,13 @@ class GameLogic:
         if snakes_was_updated:
             self.check_collisions()
 
+    def check_snakes_in_game_rect(self):
+        """Проверка гибели змеи при выходе за границы игры."""
+        for snake in self.get_snakes():
+            if not all(GameRect.collidepoint(*circle.xy)
+                       for circle in snake.circles):
+                self.snake_is_dead(snake)
+
     def set_snake_turning(self, direction):
         """Установка направления поворота змеи."""
         self.snake.set_turning(direction)
@@ -338,6 +345,7 @@ class GameLogic:
 
     def update(self, **kwargs):
         self.snake_container.clear_snakes_rectangles()
+        self.check_snakes_in_game_rect()
         self.check_collisions()
         for snake in self.get_snakes():
             snake_food_count = self.food_container.update(snake.head)
