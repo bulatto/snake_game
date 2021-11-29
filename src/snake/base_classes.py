@@ -150,8 +150,7 @@ class BaseSnake(Drawable):
     # Максимальная скорость с ускорением
     max_speed_with_boost = 10
     default_start_pos = (WIDTH / 2, HEIGHT / 2)
-    head_color = WHITE
-    color = WHITE
+    default_color = WHITE
     radius_increase_coef = 1.007
     max_radius = 25
     # Рисовать ли треугольники для расчёта коллизий
@@ -162,13 +161,14 @@ class BaseSnake(Drawable):
         self.win = win
         self.angle = kwargs.get('angle', self.angle)
         self.start_pos = kwargs.get('start_pos', self.default_start_pos)
+        self.color = kwargs.get('color') or self.default_color
         self.radius = 10
         self.is_alive = True
         self.turning_direction = None
         self.is_boost_enabled = False
         self.current_speed = self.usual_speed
 
-        head = self.get_circle(pos=self.start_pos, color=self.head_color)
+        head = self.get_circle(pos=self.start_pos, color=self.color)
         self.circles = [head]
         self.add_tail(2, initial=True)
 
@@ -317,7 +317,7 @@ class BaseSnake(Drawable):
 
     def draw_line_from_head(self, pos, color=None):
         """Нарисовать линию из точки головы"""
-        pygame.draw.line(self.win, color or self.color, self.head_xy, pos)
+        pygame.draw.line(self.win, color or self.default_color, self.head_xy, pos)
 
     def update(self, **kwargs):
         """Базовое обновление змеи (движение и поедание еды."""

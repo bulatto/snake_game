@@ -86,16 +86,14 @@ class FoodContainer(ObjectsContainer):
 class Snake(BaseSnake):
     """Обычная змея."""
 
-    color = (255, 192, 203)
-    head_color = (255, 192, 203)
+    default_color = (255, 192, 203)
     default_start_pos = (WIDTH / 2, HEIGHT / 2)
 
 
 class BotSnake(BaseSnake):
     """Змея, управляемая компьютером"""
 
-    color = (64, 255, 108)
-    head_color = (60, 255, 113)
+    default_color = (64, 255, 108)
     default_start_pos = (100, 100)
     # Определение времени до смены еды, если еда не была сьедена за это время
     food_delta_seconds = 1
@@ -198,8 +196,9 @@ class SnakeContainer(ObjectsContainer):
     """Контейнер для змей."""
     obj_class = Food
 
-    def __init__(self, food_container, win, count=0):
+    def __init__(self, snake_color, food_container, win, count=0):
         super().__init__(win, count)
+        self.snake_color = snake_color
         self.food_container = food_container
         self.main_snake_id = None
         self._snakes_rectangles = None
@@ -232,6 +231,7 @@ class SnakeContainer(ObjectsContainer):
 
     def create_main_snake(self, **snake_params):
         """Создание змеи игрока"""
+        snake_params['color'] = self.snake_color
         snake = Snake(self.get_id(), self.win, **snake_params)
         self.add_obj(snake)
         self.main_snake_id = snake.id
@@ -266,12 +266,13 @@ class SnakeContainer(ObjectsContainer):
 class GameLogic:
     """Класс с игровой логикой."""
 
-    def __init__(self, win):
+    def __init__(self, win, snake_color=None):
         self.win = win
 
         self.bot_snakes = []
         self.food_container = FoodContainer(self.win, count=INITIAL_FOOD_COUNT)
-        self.snake_container = SnakeContainer(self.food_container, self.win)
+        self.snake_container = SnakeContainer(
+            snake_color, self.food_container, self.win)
         self.snake = self.snake_container.create_main_snake()
 
         for one_pos in (100, 300, 500, 700):
@@ -388,9 +389,9 @@ class Controller(BaseController):
     default_color = GAME_DEFAULT_COLOR
     background_color = GAME_BACKGROUND_COLOR
 
-    def __init__(self, win):
+    def __init__(self, win, **kwargs):
         super().__init__(win)
-        self.game = GameLogic(self.game_surface)
+        self.game = GameLogic(self.game_surface, **kwargs)
 
     def handle_event(self, event):
         # Проверка зажатия клавиши

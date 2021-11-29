@@ -70,6 +70,11 @@ def get_random_pos(coef=0.1):
     )
 
 
+def get_random_rgb_tuple():
+    """Возвращает кортеж с числами RGB для случайного цвета."""
+    return tuple([random.randint(0, 255) for _ in range(3)])
+
+
 class DirectionEnum:
     """Описание направлений"""
 
