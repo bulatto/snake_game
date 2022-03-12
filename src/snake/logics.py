@@ -8,6 +8,7 @@ import pygame
 from settings import *
 from helpers import *
 from base_classes import Circle, ObjectsContainer, BaseSnake, BaseController
+from exceptions import GameOverException
 
 
 class Food(Circle):
@@ -288,14 +289,13 @@ class GameLogic:
     def snake_is_dead(self, snake):
         """Отработка гибели змеи."""
         if snake is self.snake:
-            print('Игра закончена')
-            sys.exit()
-        else:
-            self.snake_container.snake_is_dead(snake)
-            for circle in snake.circles:
-                self.food_container.add_new_obj(pos=circle.xy, force=True)
-            self.snake_container.create_bot_snake(
-                start_pos=self.get_random_free_position())
+            raise GameOverException()
+
+        self.snake_container.snake_is_dead(snake)
+        for circle in snake.circles:
+            self.food_container.add_new_obj(pos=circle.xy, force=True)
+        self.snake_container.create_bot_snake(
+            start_pos=self.get_random_free_position())
 
     def get_random_free_position(self, check_distance_to_head=True):
         """Получение точки далеко от других змей и игрока"""
